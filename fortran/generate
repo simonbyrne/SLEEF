@@ -1,0 +1,42 @@
+#!/bin/bash
+
+echo "#include \"../purec/sleef.h\""
+
+# prefix on symbols, which is required to avoid symbol conflicts 
+# in the event that u=""
+p="f_"
+
+# one underscore is default for gfortran but beward that 
+# mpif77 on BG undoes this to match the XLF convention,
+# which is no underscoring.
+u=""
+#u="_"
+
+# double foo(double)
+
+for s in xsin xcos xtan xasin xacos xatan xlog xexp xsinh xcosh xtanh xasinh xacosh xatanh xsqrt xcbrt xexp2 xexp10 xexpm1 xlog10 xlog1p xsin_u1 xcos_u1 xtan_u1 xasin_u1 xacos_u1 xatan_u1 xlog_u1 xexp_u1 xsinh_u1 xcosh_u1 xtanh_u1 xasinh_u1 xacosh_u1 xatanh_u1 xexp2_u1 xexp10_u1 xexpm1_u1 xlog10_u1 xlog1p_u1 xcbrt_u1 ; do
+    echo "double $p$s$u(double * x) { return $s(*x); }"
+done
+
+# double foo(double, double)
+for s in xpow xpow_u1 xatan2 xatan2_u1  ; do
+    echo "double $p$s$u(double * x, double * y) { return $s(*x,*y); }"
+done
+
+# double foo(double, int)
+s=xldexp 
+echo "double $p$s$u(double * x, double * y) { return $s(*x,*y); }"
+
+# double foo(double, double, double)
+s=xfma
+echo "double $p$s$u(double * x, double * y, double *z) { return $s(*x,*y,*z); }"
+
+# Fortran cannot return a struct so we convert these to subroutines
+# double2 foo(double)
+for s in xsincos xsincos_u1 ; do
+    echo "void $p$s$u(double * in, double * xout, double * yout) { double2 temp = $s(*in); *xout = temp.x; *yout = temp.y; return; }"
+done
+
+# int foo(double)
+s=xilogb
+echo "int $p$s$u(double * x) { return $s(*x); }"
